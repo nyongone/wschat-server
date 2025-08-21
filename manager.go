@@ -1,34 +1,34 @@
 package main
 
-type ClientManager struct {
+type Hub struct {
 	rooms      map[string]map[*Client]bool
 	broadcast  chan *Message
 	register   chan *Client
 	unregister chan *Client
 }
 
-func (m *ClientManager) start() {
+func (h *Hub) start() {
 	for {
 		select {
-		case conn := <-m.register:
-			if connections := m.rooms[conn.roomId]; connections == nil {
+		case conn := <-h.register:
+			if connections := h.rooms[conn.roomId]; connections == nil {
 				connections = make(map[*Client]bool)
-				m.rooms[conn.roomId] = connections
+				h.rooms[conn.roomId] = connections
 			}
-			m.rooms[conn.roomId][conn] = true
-		case conn := <-m.unregister:
-			connections := m.rooms[conn.roomId]
+			h.rooms[conn.roomId][conn] = true
+		case conn := <-h.unregister:
+			connections := h.rooms[conn.roomId]
 			if connections != nil {
 				if _, ok := connections[conn]; ok {
 					delete(connections, conn)
 					close(conn.send)
 					if len(connections) == 0 {
-						delete(m.rooms, conn.roomId)
+						delete(h.rooms, conn.roomId)
 					}
 				}
 			}
-		case message := <-m.broadcast:
-			connections := m.rooms[message.RoomId]
+		case message := <-h.broadcast:
+			connections := h.rooms[message.RoomId]
 			for c := range connections {
 				select {
 				case c.send <- []byte(message.Content):
@@ -36,7 +36,7 @@ func (m *ClientManager) start() {
 					close(c.send)
 					delete(connections, c)
 					if len(connections) == 0 {
-						delete(m.rooms, message.RoomId)
+						delete(h.rooms, message.RoomId)
 					}
 				}
 			}
@@ -44,8 +44,8 @@ func (m *ClientManager) start() {
 	}
 }
 
-func (m *ClientManager) send(roomId string, message []byte, ignore *Client) {
-	for conn := range m.rooms[roomId] {
+func (h *Hub) send(roomId string, message []byte, ignore *Client) {
+	for conn := range h.rooms[roomId] {
 		if conn != ignore {
 			conn.send <- message
 		}

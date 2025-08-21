@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var manager = ClientManager{
+var hub = Hub{
 	broadcast:  make(chan *Message),
 	register:   make(chan *Client),
 	unregister: make(chan *Client),
@@ -37,14 +37,14 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		roomId: r.URL.Query().Get("roomId"),
 	}
 
-	manager.register <- client
+	hub.register <- client
 
-	go client.read(&manager)
+	go client.read(&hub)
 	go client.write()
 }
 
 func main() {
-	go manager.start()
+	go hub.start()
 	http.HandleFunc("/chat", wsHandler)
 
 	log.Println("Server started on port 8080")

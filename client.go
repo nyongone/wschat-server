@@ -11,21 +11,21 @@ type Client struct {
 	roomId string
 }
 
-func (c *Client) read(m *ClientManager) {
+func (c *Client) read(h *Hub) {
 	defer func() {
-		m.unregister <- c
+		h.unregister <- c
 		_ = c.socket.Close()
 	}()
 
 	for {
 		_, message, err := c.socket.ReadMessage()
 		if err != nil {
-			m.unregister <- c
+			h.unregister <- c
 			_ = c.socket.Close()
 			break
 		}
 
-		m.broadcast <- &Message{Sender: c.id, Content: string(message), RoomId: c.roomId}
+		h.broadcast <- &Message{Sender: c.id, Content: string(message), RoomId: c.roomId}
 	}
 }
 
