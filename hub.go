@@ -2,7 +2,7 @@ package main
 
 type Hub struct {
 	rooms      map[string]map[*Client]bool
-	broadcast  chan *Message
+	broadcast  chan Message
 	register   chan *Client
 	unregister chan *Client
 }

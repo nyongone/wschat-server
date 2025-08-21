@@ -25,7 +25,7 @@ func (c *Client) read(h *Hub) {
 			break
 		}
 
-		h.broadcast <- &Message{Sender: c.id, Content: string(message), RoomId: c.roomId}
+		h.broadcast <- Message{Sender: c.id, Content: string(message), RoomId: c.roomId}
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 var hub = Hub{
-	broadcast:  make(chan *Message),
+	broadcast:  make(chan Message),
 	register:   make(chan *Client),
 	unregister: make(chan *Client),
 	rooms:      make(map[string]map[*Client]bool),
