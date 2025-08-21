@@ -1,18 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"wschat-server/internal/socket"
+	"wschat-server/internal/util"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
-var hub = Hub{
-	broadcast:  make(chan Message),
-	register:   make(chan *Client),
-	unregister: make(chan *Client),
-	rooms:      make(map[string]map[*Client]bool),
+var hub = socket.Hub{
+	Broadcast:  make(chan socket.Message),
+	Register:   make(chan *socket.Client),
+	Unregister: make(chan *socket.Client),
+	Rooms:      make(map[string]map[*socket.Client]bool),
 }
 
 var upgrader = websocket.Upgrader{
@@ -30,25 +33,27 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &Client{
-		id:     uuid.New().String(),
-		socket: conn,
-		send:   make(chan []byte),
-		roomId: r.URL.Query().Get("roomId"),
+	client := &socket.Client{
+		Id:     uuid.New().String(),
+		Socket: conn,
+		Send:   make(chan []byte),
+		RoomId: r.URL.Query().Get("roomId"),
 	}
 
-	hub.register <- client
+	hub.Register <- client
 
-	go client.read(&hub)
-	go client.write()
+	go client.Read(&hub)
+	go client.Write()
 }
 
 func main() {
-	go hub.start()
+	util.LoadEnv()
+
+	go hub.Start()
 	http.HandleFunc("/chat", wsHandler)
 
-	log.Println("Server started on port 8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Printf("Server started on %s:%s", util.Env.Host, util.Env.Port)
+	if err := http.ListenAndServe(fmt.Sprintf("%s:%s", util.Env.Host, util.Env.Port), nil); err != nil {
 		log.Fatalf("An Error occured while starting the server: %v", err)
 	}
 }

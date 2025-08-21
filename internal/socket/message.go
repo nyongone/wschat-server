@@ -1,4 +1,4 @@
-package main
+package socket
 
 type Message struct {
 	Sender  string `json:"sender"`
