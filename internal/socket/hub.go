@@ -29,12 +29,12 @@ func (h *Hub) Start() {
 			}
 		case message := <-h.Broadcast:
 			connections := h.Rooms[message.RoomId]
-			for c := range connections {
+			for conn := range connections {
 				select {
-				case c.Send <- []byte(message.Content):
+				case conn.Send <- []byte(message.Content):
 				default:
-					close(c.Send)
-					delete(connections, c)
+					close(conn.Send)
+					delete(connections, conn)
 					if len(connections) == 0 {
 						delete(h.Rooms, message.RoomId)
 					}
